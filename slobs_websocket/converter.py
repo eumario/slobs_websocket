@@ -2,12 +2,17 @@ import functools
 converters = {}
 
 def converter(event):
+    if isinstance(event,str):
+        event = [event]
+    
     def decorator_converter(func):
         global converters
         @functools.wraps(func)
         def wrapper_converter(*args, **kwargs):
-            converters[event] = func
-        converters[event] = func
+            for ev in event:
+                converters[ev] = func
+        for ev in event:
+            converters[ev] = func
         return wrapper_converter
     return decorator_converter
 

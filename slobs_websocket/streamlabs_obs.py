@@ -44,7 +44,7 @@ class StreamlabsOBS():
         >>> client.disconnect()
     """
 
-    def __init__(self, prefix="/api", host="localhost", port=59650, debug=False, debugJson=False):
+    def __init__(self, prefix="/api", host="localhost", port=59650, apikey=None, debug=False, debugJson=False):
         """
         Construct a new StreamlabsOBS Client
 
@@ -58,6 +58,7 @@ class StreamlabsOBS():
         self.prefix = prefix
         self.host = host
         self.port = port
+        self.apikey = apikey
         self.thread_recv = None
         self.nextId = 0
         self.packets = {}
@@ -90,7 +91,7 @@ class StreamlabsOBS():
         self.SourcesService = SourcesService()
         self.StreamingService = StreamingService()
 
-    def connect(self, host=None, port=None):
+    def connect(self, host=None, port=None, apikey=None):
         """
         Connect to the websocket server
 
@@ -100,6 +101,8 @@ class StreamlabsOBS():
             self.host = host
         if port is not None:
             self.port = port
+        if apikey is not None:
+            self.apikey = apikey
 
         if host is not None or port is not None:
             self.url = "ws://{}:{}{}/websocket".format(self.host, self.port, self.prefix)
@@ -111,6 +114,9 @@ class StreamlabsOBS():
             self.ws.connect(self.url)
             self.log.info("Connected!")
             self._run_threads()
+            if not host == "localhost" or not host == "127.0.0.1":
+                res = self._send_packet(self.apikey,method="auth",resource="TcpServerService")
+                print("Result of TcpServerService.auth: {}".format(res))
         except socket.error as e:
             raise exceptions.ConnectionFailure(str(e))
 
@@ -201,8 +207,11 @@ class StreamlabsOBS():
         while time.time() < timeout:
             if message_id in self.packets:
                 packet = self.packets.pop(message_id)
-                if "error" in packet:
-                    raise exceptions.ObjectError(u"Error({}) - {}".format(packet['code'], packet['message'].split("\n")[0]))
+                if isinstance(packet, dict):
+                    if "error" in packet:
+                        raise exceptions.ObjectError(u"Error({}) - {}".format(packet['code'], packet['message'].split("\n")[0]))
+                    else:
+                        return packet
                 else:
                     return packet
             time.sleep(0.1)

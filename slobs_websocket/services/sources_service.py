@@ -1,10 +1,16 @@
 from .basic_event_service import BasicEventService
+from slobs_websocket.converter import *
+from slobs_websocket.util_funcs import Utils
 
 class SourcesService(BasicEventService):
     """
         Events
     """
     __events__ = ["sourceAdded","sourceRemoved","sourceUpdated"]
+
+    @converter(["sourceAdded","sourceRemoved","sourceUpdated"])
+    def convertSource(data):
+        return Utils.toSource(data)
 
     """
         Methods

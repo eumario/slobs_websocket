@@ -1,5 +1,4 @@
 from .basic_event_service import BasicEventService
-from slobs_websocket.objects import Scene, SceneItem, SceneItemFolder, SceneNode
 from slobs_websocket.util_funcs import Utils
 from slobs_websocket.converter import *
 
@@ -13,15 +12,19 @@ class ScenesService(BasicEventService):
         Event Converters
     """
 
-    @converter("sceneSwitched")
-    def convertSceneSwitched(data):
+    @converter(["itemAdded","itemRemoved","itemUpdated"])
+    def convertItem(data):
+        return Utils.toSceneItem(data)
+
+    @converter(["sceneAdded","sceneRemoved","sceneSwitched"])
+    def convertScene(data):
         return Utils.toScene(data)
 
     """
         Accessors
     """
     def activeScene(self):
-        return Util.toScene(self._send_packet())
+        return Utils.toScene(self._send_packet())
 
     def activeSceneId(self):
         return self._send_packet()

@@ -1,11 +1,14 @@
 from .basic_event_service import BasicEventService
-
+from slobs_websocket.util_funcs import Utils
+from slobs_websocket.converter import *
 class SceneCollectionsService(BasicEventService):
     
     """
         Events
     """
     __events__ = ["collectionAdded", "collectionRemoved", "collectionSwitched", "collectionUpdated", "collectionWillSwitch"]
+
+    
     
     """
         Accessors

@@ -43,7 +43,10 @@ class RecvThread(threading.Thread):
                     self.core.packets[id] = data
                 elif '_type' in result['result'] and result['result']['_type'] == "EVENT":
                     result = result["result"]
-                    data = result.pop("data")
+                    if "data" in result:
+                        data = result.pop("data")
+                    else:
+                        data = None
                     event = result["resourceId"]
                     self.log.debug(u"Got Event: {}".format(event))
                     if event in self.events:
