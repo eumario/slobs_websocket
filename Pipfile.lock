@@ -1,11 +1,11 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "964945888557280c423a2fc6e93af849b1be04beda749fb0a45c2c7ae6803cd8"
+            "sha256": "b036835febf2b15e88633e9a53ef1e9cb432f894cb22ed68aed17fa2845466f0"
         },
         "pipfile-spec": 6,
         "requires": {
-            "python_version": "3.8"
+            "python_version": "3.7"
         },
         "sources": [
             {
@@ -21,7 +21,7 @@
                 "sha256:30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259",
                 "sha256:8b74bedcbbbaca38ff6d7491d76f2b06b3592611af620f8426e82dddb04a5ced"
             ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2'",
+            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
             "version": "==1.15.0"
         },
         "websocket-client": {
