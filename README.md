@@ -20,7 +20,24 @@ For manual installation, git clone the github repository and copy the directory 
 
 ## Usage
 
-See python scripts in the [samples](https://github.com/eumario/slobs_websocket/tree/master/samples) directory.
+Load connection info from toml config. A valid `config.toml` might look like this:
+
+```toml
+[connection]
+host = "localhost"
+port = 59650
+apikey = "mystrongapikey"
+```
+
+It should be placed next to your `__main__.py` file.
+
+#### Otherwise:
+
+Pass host, port and apikey as keyword arguments:
+
+-   `host`: streamlabs websocket server
+-   `port`: port to access server
+-   `apikey`: streamlabs websocket server password
 
 ## Simple Example
 
@@ -29,6 +46,7 @@ Below is a simple example of getting the list of scenes in your current Scene co
 ```python
 from slobs_websocket import StreamlabsOBS
 
+# load conn info from config.toml
 with StreamlabsOBS() as client:
     scenes = client.ScenesService.getScenes()
 
