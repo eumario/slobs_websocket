@@ -73,9 +73,9 @@ class StreamlabsOBS:
         self.apikey = apikey
         conn = self._conn_from_toml()
         if conn:
-            self.host = conn["host"]
-            self.port = conn["port"]
-            self.apikey = conn["apikey"]
+            self.host = conn.get("host")
+            self.port = conn.get("port")
+            self.apikey = conn.get("apikey")
         self.thread_recv = None
         self.nextId = 0
         self.packets = {}
