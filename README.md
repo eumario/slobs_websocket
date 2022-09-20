@@ -1,4 +1,5 @@
 # slobs_websocket
+
 Python library to communicate with [Streamlabs OBS](https://streamlabs.com) Client.
 
 _Licensed under the GPL v3 License_
@@ -15,38 +16,51 @@ Just run `pip install git+https://github.com/eumario/slobs_websocket.git#egg=slo
 
 For manual installation, git clone the github repository and copy the directory **slobs_websocket** into your python project.
 
-**Requires**: websocket-client (from pip)
+**Requires**: websocket-client (from pip), tomli
 
 ## Usage
 
-See python scripts in the [samples](https://github.com/eumario/slobs_websocket/tree/master/samples) directory.
+Load connection info from toml config. A valid `config.toml` might look like this:
+
+```toml
+[connection]
+host = "localhost"
+port = 59650
+apikey = "mystrongapikey"
+```
+
+It should be placed next to your `__main__.py` file.
+
+#### Otherwise:
+
+Pass host, port and apikey as keyword arguments:
+
+-   `host`: streamlabs websocket server
+-   `port`: port to access server
+-   `apikey`: streamlabs websocket server password
 
 ## Simple Example
 
 Below is a simple example of getting the list of scenes in your current Scene collection, and printing out their name.
 
 ```python
-from slobs_websockets import StreamlabsOBS
+from slobs_websocket import StreamlabsOBS
 
-# Create the client object, and connect to Streamlabs OBS
-client = StreamlabsOBS()
-client.connect()  # Default settings is Host localhost, Port 59650, if connecting to remote machine, apikey must be provided.
+# load conn info from config.toml
+with StreamlabsOBS() as client:
+    scenes = client.ScenesService.getScenes()
 
-scenes = client.ScenesService.getScenes()
-
-for scene in scenes:
-    printf("Scene: {scene.name}")
-
-client.disconnect()
+    for scene in scenes:
+        print(scene.name)
 ```
 
 ## Design of Library
 
-Inspiration for design of library comes from a Ruby background of meta programming, meaning that all calls in library goes through a base **BasicService** class, or **BasicEventService** class, for services that support events.  These two classes implement the core of the work to be done in the library for each service class that Streamlabs provides.
+Inspiration for design of library comes from a Ruby background of meta programming, meaning that all calls in library goes through a base **BasicService** class, or **BasicEventService** class, for services that support events. These two classes implement the core of the work to be done in the library for each service class that Streamlabs provides.
 
-When you initialize the **StreamlabsOBS** class, it will initialize all of the service classes for you automatically as accessors on the client object, making it easier to use dot notation to make your Websocket calls.  No need for creating a request, and sending it, getting the response, and parsing the data.  The library will automatically map data based upon the result, to the appropriate object classes.
+When you initialize the **StreamlabsOBS** class, it will initialize all of the service classes for you automatically as accessors on the client object, making it easier to use dot notation to make your Websocket calls. No need for creating a request, and sending it, getting the response, and parsing the data. The library will automatically map data based upon the result, to the appropriate object classes.
 
-Accessing the result data, is a simple as knowing what field the Json provides for each object.  An example taken from the API Reference for Scenes:
+Accessing the result data, is a simple as knowing what field the Json provides for each object. An example taken from the API Reference for Scenes:
 
 ```
 {'_type': 'HELPER',
@@ -87,7 +101,7 @@ Accessing the result data, is a simple as knowing what field the Json provides f
    'recordingVisible': True}]}
 ```
 
-As you can see from the JSON Response above, the Scene object, will have accessors for resourceId, id, name and nodes, that you would access as: **scene.id**, **scene.name**, or even **scene.nodes** will return the array with the nodes.  All Arrays with objects in them, will be converted to their proper format, EG: SceneNodeItem for Items, and such.
+As you can see from the JSON Response above, the Scene object, will have accessors for resourceId, id, name and nodes, that you would access as: **scene.id**, **scene.name**, or even **scene.nodes** will return the array with the nodes. All Arrays with objects in them, will be converted to their proper format, EG: SceneNodeItem for Items, and such.
 
 ## Problems?
 

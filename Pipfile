@@ -10,6 +10,8 @@ setuptools = "*"
 
 [packages]
 websocket-client = "*"
+tomli = "*"
+slobs-websocket = {editable = true, path = "."}
 
 [requires]
 python_version = "3.7"

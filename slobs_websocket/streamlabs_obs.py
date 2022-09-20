@@ -2,49 +2,61 @@
     Central API
 """
 
-import json
 import inspect
-import websocket
+import json
 import logging
-import time
 import socket
+import time
+from pathlib import Path
 
-from .services import *
+import tomli
+import websocket
+
 from . import exceptions
 from .recv_thread import RecvThread
 from .service_connection import ServiceConnection
+from .services import *
 
-class StreamlabsOBS():
+
+class StreamlabsOBS:
     """
-        Core class for StreamlabsOBS Client.  This creates, and manages the
-        websocket to use for connecting to Streamlabs OBS, as well as
-        dispatching, and receiving messages.
+    Core class for StreamlabsOBS Client.  This creates, and manages the
+    websocket to use for connecting to Streamlabs OBS, as well as
+    dispatching, and receiving messages.
 
-        Simple Usage:
-        >>> from slobs_websocket import StreamlabsOBS
-        >>> client = StreamlabsOBS("/api",host="localhost",port=59650)
-        >>> client.connect()
-        >>> client.ScenesService.getScenes()
-        [
-            {
-                "_type": "HELPER",
-                "resourceId": "Scene[\"3efd436e5546\"]",
-                "id": "3efd436e5546",
-                "name": "My super scene",
-                "activeItemIds": []
-            },
-            {
-                "_type": "HELPER",
-                "resourceId": "Scene[\"6b615869aba3\"]",
-                "id": "6b615869aba3",
-                "name": "New Scene",
-                "activeItemIds": []
-            }
-        ]
-        >>> client.disconnect()
+    Simple Usage:
+    >>> from slobs_websocket import StreamlabsOBS
+    >>> client = StreamlabsOBS("/api",host="localhost",port=59650)
+    >>> client.connect()
+    >>> client.ScenesService.getScenes()
+    [
+        {
+            "_type": "HELPER",
+            "resourceId": "Scene[\"3efd436e5546\"]",
+            "id": "3efd436e5546",
+            "name": "My super scene",
+            "activeItemIds": []
+        },
+        {
+            "_type": "HELPER",
+            "resourceId": "Scene[\"6b615869aba3\"]",
+            "id": "6b615869aba3",
+            "name": "New Scene",
+            "activeItemIds": []
+        }
+    ]
+    >>> client.disconnect()
     """
 
-    def __init__(self, prefix="/api", host="localhost", port=59650, apikey=None, debug=False, debugJson=False):
+    def __init__(
+        self,
+        prefix="/api",
+        host="localhost",
+        port=59650,
+        apikey=None,
+        debug=False,
+        debugJson=False,
+    ):
         """
         Construct a new StreamlabsOBS Client
 
@@ -59,6 +71,11 @@ class StreamlabsOBS():
         self.host = host
         self.port = port
         self.apikey = apikey
+        conn = self._conn_from_toml()
+        if conn:
+            self.host = conn.get("host")
+            self.port = conn.get("port")
+            self.apikey = conn.get("apikey")
         self.thread_recv = None
         self.nextId = 0
         self.packets = {}
@@ -78,10 +95,10 @@ class StreamlabsOBS():
         self.debugJson = debugJson
 
         # Websocket URL to connect to
-        self.url = "ws://{}:{}{}/websocket".format(self.host,self.port,self.prefix)
+        self.url = "ws://{}:{}{}/websocket".format(self.host, self.port, self.prefix)
         self.log.debug("Websocket URL: {}".format(self.url))
 
-        ServiceConnection(self,self.log)
+        ServiceConnection(self, self.log)
         # Services in which is used with slobs.
         self.AudioService = AudioService()
         self.NotificationsService = NotificationsService()
@@ -90,6 +107,17 @@ class StreamlabsOBS():
         self.SelectionService = SelectionService()
         self.SourcesService = SourcesService()
         self.StreamingService = StreamingService()
+
+    def _conn_from_toml(self):
+        filepath = Path.cwd() / "config.toml"
+        if filepath.is_file():
+            with open(filepath, "rb") as f:
+                conn = tomli.load(f)
+            return conn["connection"]
+
+    def __enter__(self):
+        self.connect(self.host, self.port, self.apikey)
+        return self
 
     def connect(self, host=None, port=None, apikey=None):
         """
@@ -105,7 +133,9 @@ class StreamlabsOBS():
             self.apikey = apikey
 
         if host is not None or port is not None:
-            self.url = "ws://{}:{}{}/websocket".format(self.host, self.port, self.prefix)
+            self.url = "ws://{}:{}{}/websocket".format(
+                self.host, self.port, self.prefix
+            )
             self.log.debug("Websocket URL: {}".format(self.url))
 
         try:
@@ -115,7 +145,9 @@ class StreamlabsOBS():
             self.log.info("Connected!")
             self._run_threads()
             if not host == "localhost" or not host == "127.0.0.1":
-                res = self._send_packet(self.apikey,method="auth",resource="TcpServerService")
+                res = self._send_packet(
+                    self.apikey, method="auth", resource="TcpServerService"
+                )
                 print("Result of TcpServerService.auth: {}".format(res))
         except socket.error as e:
             raise exceptions.ConnectionFailure(str(e))
@@ -123,7 +155,7 @@ class StreamlabsOBS():
     def _run_threads(self):
         if self.thread_recv is not None:
             self.thread_recv.running = False
-        self.thread_recv = RecvThread(self, self.log, debugJson = self.debugJson)
+        self.thread_recv = RecvThread(self, self.log, debugJson=self.debugJson)
         self.thread_recv.daemon = True
         self.thread_recv.start()
 
@@ -161,8 +193,8 @@ class StreamlabsOBS():
 
     def _send_packet(self, *args, **kwargs):
         self.nextId += 1
-        frm  = inspect.stack()[1]
-        cls = frm[0].f_locals.get('self',None)
+        frm = inspect.stack()[1]
+        cls = frm[0].f_locals.get("self", None)
         method = frm.function
         if cls == None:
             resource = ""
@@ -176,12 +208,7 @@ class StreamlabsOBS():
             resource = kwargs["resource"]
 
         # Initial Payload
-        payload = {
-            "jsonrpc": "2.0",
-            "id": self.nextId,
-            "method": method,
-            "params": {}
-        }
+        payload = {"jsonrpc": "2.0", "id": self.nextId, "method": method, "params": {}}
 
         # Inject into payload any Keyword Arguments
         for key, value in kwargs.items():
@@ -203,16 +230,23 @@ class StreamlabsOBS():
         return self._wait_message(self.nextId)
 
     def _wait_message(self, message_id):
-        timeout = time.time() + 60 # Timeout = 60s
+        timeout = time.time() + 60  # Timeout = 60s
         while time.time() < timeout:
             if message_id in self.packets:
                 packet = self.packets.pop(message_id)
                 if isinstance(packet, dict):
                     if "error" in packet:
-                        raise exceptions.ObjectError(u"Error({}) - {}".format(packet['code'], packet['message'].split("\n")[0]))
+                        raise exceptions.ObjectError(
+                            "Error({}) - {}".format(
+                                packet["code"], packet["message"].split("\n")[0]
+                            )
+                        )
                     else:
                         return packet
                 else:
                     return packet
             time.sleep(0.1)
-        raise exceptions.MessageTimeout(u"No answer for message {}".format(message_id))
+        raise exceptions.MessageTimeout("No answer for message {}".format(message_id))
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.disconnect()
