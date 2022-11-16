@@ -1,3 +1,5 @@
+import time
+
 from slobs_websocket import StreamlabsOBS
 
 
@@ -7,7 +9,9 @@ def main():
         scenes = client.ScenesService.getScenes()
 
         for scene in scenes:
-            print(scene.name)
+            print(f"Switching to scene {scene.name}")
+            client.ScenesService.makeSceneActive(scene.id)
+            time.sleep(0.5)
 
 
 if __name__ == "__main__":
