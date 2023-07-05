@@ -4,7 +4,7 @@ class StreamingService(BasicEventService):
     """
         Events
     """
-    __events__ = ["streamingStatusChanged"]
+    __events__ = ["streamingStatusChange"]
 
     """
         Methods
